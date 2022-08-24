@@ -18,6 +18,9 @@ setup(
     description = 'A Python module to bypass Cloudflare\'s anti-bot page.',
     long_description=readme,
     long_description_content_type='text/markdown',
+    data_files=[
+        ("browsers", ["cloudscraper/user_agent/browsers.json"]),
+    ],
     url = 'https://github.com/venomous/cloudscraper',
     keywords = [
         'cloudflare',

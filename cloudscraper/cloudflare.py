@@ -30,7 +30,8 @@ from .exceptions import (
     CloudflareSolveError,
     CloudflareChallengeError,
     CloudflareCaptchaError,
-    CloudflareCaptchaProvider
+    CloudflareCaptchaProvider,
+
 )
 
 # ------------------------------------------------------------------------------- #
@@ -50,15 +51,6 @@ class Cloudflare():
     # Unescape / decode html entities
     # ------------------------------------------------------------------------------- #
 
-    @staticmethod
-    def unescape(html_text):
-        if sys.version_info >= (3, 0):
-            if sys.version_info >= (3, 4):
-                return html.unescape(html_text)
-
-            return HTMLParser().unescape(html_text)
-
-        return HTMLParser().unescape(html_text)
 
     # ------------------------------------------------------------------------------- #
     # check if the response contains a valid Cloudflare challenge
@@ -116,7 +108,7 @@ class Cloudflare():
                     resp.text,
                     re.M | re.S
                 )
-                and re.search(r'\s*id="trk_captcha_js"', resp.text, re.M | re.S)
+                and re.search(r'\s*id="trk_(captcha|jschal)_js"', resp.text, re.M | re.S)
             )
         except AttributeError:
             pass
@@ -134,9 +126,9 @@ class Cloudflare():
                 resp.headers.get('Server', '').startswith('cloudflare')
                 and resp.status_code == 403
                 and re.search(
-                    r'action="/\S+__cf_chl_(?:captcha|managed|f)_tk__=\S+',
+                    r'action="/\S+__cf_chl_(?:captcha|managed|f)_tk(__|)=\S+',
                     resp.text,
-                    re.M | re.DOTALL
+                    re.M | re.DOTALL,
                 )
             )
         except AttributeError:
@@ -240,7 +232,7 @@ class Cloudflare():
             )
 
         return {
-            'url': f"{hostParsed.scheme}://{hostParsed.netloc}{self.unescape(formPayload['challengeUUID'])}",
+            'url': f"{hostParsed.scheme}://{hostParsed.netloc}{html.unescape(formPayload['challengeUUID'])}",
             'data': payload
         }
 
@@ -321,7 +313,7 @@ class Cloudflare():
         hostParsed = urlparse(url)
 
         return {
-            'url': f"{hostParsed.scheme}://{hostParsed.netloc}{self.unescape(formPayload['challengeUUID'])}",
+            'url': f"{hostParsed.scheme}://{hostParsed.netloc}{html.unescape(formPayload['challengeUUID'])}",
             'data': dataPayload
         }
 
@@ -330,7 +322,7 @@ class Cloudflare():
     # ------------------------------------------------------------------------------- #
 
     def Challenge_Response(self, resp, **kwargs):
-        if self.is_Captcha_Challenge(resp):
+        if self.is_New_Captcha_Challenge(resp) or self.is_Captcha_Challenge(resp):
             # ------------------------------------------------------------------------------- #
             # double down on the request as some websites are only checking
             # if cfuid is populated before issuing Captcha.
@@ -341,7 +333,7 @@ class Cloudflare():
                     self.cloudscraper.perform_request(resp.request.method, resp.url, **kwargs)
                 )
 
-            if not self.is_Captcha_Challenge(resp):
+            if not self.is_New_Captcha_Challenge(resp) and not self.is_Captcha_Challenge(resp):
                 return resp
 
             # ------------------------------------------------------------------------------- #

@@ -1,9 +1,9 @@
-import json
-import os
-import random
 import re
 import sys
 import ssl
+import json
+import random
+import pathlib
 
 from collections import OrderedDict
 
@@ -71,11 +71,8 @@ class User_Agent():
             sys.tracebacklimit = 0
             raise RuntimeError("Sorry you can't have mobile and desktop disabled at the same time.")
 
-        with open(os.path.join(os.path.dirname(__file__), 'browsers.json'), 'r') as fp:
-            user_agents = json.load(
-                fp,
-                object_pairs_hook=OrderedDict
-            )
+        with open(f"{pathlib.Path(__file__).parent.absolute()}/browsers.json", "r") as fp:
+            user_agents = json.load(fp, object_pairs_hook=OrderedDict)
 
         if self.custom:
             if not self.tryMatchCustom(user_agents):

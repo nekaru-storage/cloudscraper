@@ -132,11 +132,10 @@ class ChallengeInterpreter(JavaScriptInterpreter):
             if needle in jsfuckMath[1]:
                 expression = re.findall(r"^(.*?)(.)\(function", jsfuckMath[1])[0]
 
+                starting_index = jsfuckMath[1].find('"("+p+")")}') + len('"("+p+")")}')
                 expression_value = operators[expression[1]](
                     float(jsfuckToNumber(expression[0])),
-                    float(ord(domain[jsfuckToNumber(jsfuckMath[1][
-                        jsfuckMath[1].find('"("+p+")")}') + len('"("+p+")")}'):-2
-                    ])]))
+                    float(ord(domain[jsfuckToNumber(jsfuckMath[1][starting_index:-2])])),
                 )
             else:
                 expression_value = jsfuckToNumber(jsfuckMath[1])
